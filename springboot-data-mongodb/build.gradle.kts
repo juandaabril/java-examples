@@ -7,7 +7,7 @@ plugins {
 group = "com.juandaabril"
 
 // x-release-please-start-version
-val version="0.2.0"
+val version="1.0.0"
 // x-release-please-end
 
 project.version = version
