@@ -1,0 +1,100 @@
+name: Simple Monorepo Workflow
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.setmatrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch all history to compare all commits
+
+      - name: Detect changed projects
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            
+            // Get list of changed files between the base and head commits
+            const baseSha = context.payload.before;
+            const headSha = context.payload.after
+
+            console.log('baseSha', baseSha);
+            console.log('headSha', headSha);
+
+            const changedFiles = execSync(`git diff --name-only ${baseSha} ${headSha}`).toString();
+            let changedProjects = [];
+            
+            
+            console.log('changedFiles', changedFiles);
+            const seenProjects = new Set();  // To track seen projects and avoid duplicates
+            const changedFilesArray = changedFiles.split('\n').filter(Boolean);
+            
+            changedFilesArray.forEach(file => {
+    
+              // Check if the file path starts with the type
+
+                const fullPath = file.split('/').slice(0, 2).join('/');  // Get the directory path
+                const name = fullPath.split('/')[1];
+          
+                if (!seenProjects.has(name)) {
+                  // Add to result if not seen before
+                  seenProjects.add(name);
+                  changedProjects.push({ path: fullPath, name });
+                }
+              
+     
+            });
+            
+            
+            const matrix = {};
+            matrix.include = [];
+            
+            if (changedProjects) {
+              matrix.include = changedProjects;
+            }
+            
+            
+            console.log(`result=`, matrix);
+            return JSON.stringify(matrix);
+      - name: Print changed projects
+        run: |
+          echo "Changed projects: '${{ steps.detect.outputs.result }}'"
+      - name: Set Dynamic Matrix
+        id: setmatrix
+        run: |
+          matrixStringifiedObject=${{ steps.detect.outputs.result }}
+          echo "matrix=$matrixStringifiedObject" >> $GITHUB_OUTPUT
+
+  build-and-test:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK for Java projects
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '21'
+
+      - name: Run Clean
+        working-directory: ${{ matrix.path }}
+        run: make clean
+
+      - name: Run tests
+        working-directory: ${{ matrix.path }}
+        run: make test
+
+      - name: Run Build
+        working-directory: ${{ matrix.path }}
+        run:  make build
