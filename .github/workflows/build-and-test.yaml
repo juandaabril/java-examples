@@ -40,7 +40,7 @@ jobs:
     
               // Check if the file path starts with the type
 
-                const fullPath = file.split('/').slice(0, 2).join('/');  // Get the directory path
+                const fullPath = file.split('/').slice(0, 1).join('/');  // Get the directory path
                 const name = fullPath.split('/')[1];
           
                 if (name.startsWith("springboot") && !seenProjects.has(name)) {
