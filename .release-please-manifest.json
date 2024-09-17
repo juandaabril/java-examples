@@ -1,3 +1,4 @@
 {
-  "springboot-data-mongo": "0.0.0"
+  "springboot-data-mongo": "0.0.0",
+  "springboot-data-mongodb": "1.0.0"
 }
