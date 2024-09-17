@@ -43,15 +43,12 @@ jobs:
                 const fullPath = file.split('/').slice(0, 2).join('/');  // Get the directory path
                 const name = fullPath.split('/')[1];
           
-                if (!seenProjects.has(name)) {
+                if (name.startsWith("springboot") && !seenProjects.has(name)) {
                   // Add to result if not seen before
                   seenProjects.add(name);
                   changedProjects.push({ path: fullPath, name });
                 }
-              
-     
             });
-            
             
             const matrix = {};
             matrix.include = [];
@@ -59,7 +56,6 @@ jobs:
             if (changedProjects) {
               matrix.include = changedProjects;
             }
-            
             
             console.log(`result=`, matrix);
             return JSON.stringify(matrix);
@@ -84,7 +80,7 @@ jobs:
       - name: Set up JDK for Java projects
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '21'
 
       - name: Run Clean
